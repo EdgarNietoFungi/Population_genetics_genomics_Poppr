@@ -1,0 +1,47 @@
+---
+title: "poppr_introduction"
+author: "Nieto_Lopez"
+date: "9/21/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("poppr")
+library("magrittr")
+
+
+```
+
+```{r}
+data(Pinf)
+allelic_diversity <- Pinf %>%
+  clonecorrect(strata= ~Continent/Country) %>% # clone censor by continent and country
+  seppop() %>%                                # Separate populations (by continent)
+  lapply(FUN = locus_table, info = FALSE)     # Apply the function locus_table to both populations
+allelic_diversity 
+```
+
+```{r}
+browseVignettes()                     # see vignettes from all packages
+browseVignettes(package = 'poppr')    # see vignettes from a specific package.
+vignette('poppr_manual')              #look at a specific vignette you can type
+```
+#Importing data   
+```{r}
+library("poppr")
+monpop <- read.genalex ("data/monpop.csv")
+monpop
+```
+other formats that could be also read:
+ FSTAT (file.dat)
+GENETIX (file.gtx)
+GENEPOP (file.gen)
+STRUCTURE (file.str)
+#Splitting the data in levels as hierachielly
+
+```{r}
+splitStrata(monpop) <- ~Tree/Year/Symptom
+monpop # After (Three distinct levels)
+```
+
