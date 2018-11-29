@@ -1,0 +1,96 @@
+---
+title: "Linkage of desquilibrium"
+author: "Nieto_Lopez"
+date: "11/29/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library("poppr")
+library("magrittr")
+data(Pinf)
+# Next, we will analyze the North American population with the index of association and use 999 permutations of the data in order to give us a p-value. Note that the p-value is calculated with the original observation included.
+
+MX <- popsub(Pinf, "North America")
+
+ia(MX, sample = 999)
+
+```
+We observe 48 individuals and see that P=0.015
+ for r¯d=0.024. We thus reject the null hypothesis of no linkage among markers. Notice, however, that the observed r¯d  falls on the right tail of the re-sampled distribution and the P value is close to P=0.01 . Could this population have clones? We can find out by displaying the data.
+```{r}
+MX
+
+```
+Clone correction
+Indeed we observe 43 multilocus genotypes out of 48 samples. We are looking at partial clonality and thus need to use clone-corrected (also called clone- censored) data:
+```{r}
+MX %>% clonecorrect(strata= ~Continent/Country) %>% ia(sample = 999)
+
+```
+Now r¯d
+ is located more centrally in the distribution expected from unlinked loci. Note that P  has improved and we fail to reject the null hypothesis of no linkage among markers. Thus it appears that populations in Mexico are sexual.
+
+Next let’s use the same process to evaluate the South American population:
+```{r}
+LOSANDES <- popsub(Pinf, "South America")
+
+ia(LOSANDES, sample = 999)
+```
+We observe 38 individuals and see that P=0.001
+ for r¯d=0.345.
+ Now clone corrected
+```{r}
+LOSANDES %>% clonecorrect(strata= ~Continent/Country) %>% ia(sample = 999)
+```
+ Even though clone corrected 
+ Both clone-corrected (N=29
+) and uncorrected data (N=38
+) reject the hypothesis of no linkage among markers. We thus have support for populations in Mexico being sexual while those in South America are clonal.
+
+This approach has been applied to provide support for Mexico as the putative center of origin of the potato late blight pathogen P. infestans (Goss et al., 2014). At the center of origin this organism is expected to reproduce sexually, while South American populations are clonal.
+
+
+Pairwise r¯d  over all loci  
+
+To ensure that the pattern of linkage disequilibrium seen is not due to a <single pair of loci>, you can calculate IA
+ and r¯d
+ over all pairs of loci. We’ll perform this on the clone-corrected samples as above.
+
+Pairwise for the Mexican population:
+```{r}
+
+MXpair <- MX %>% clonecorrect(strata= ~Continent/Country) %>% pair.ia
+```
+The heatmaps produced make it look like there is more linkage in the Mexican population! But this is where looks can be deceiving. The color palettes are scaled to the data. We can confirm it by looking at the values:
+
+```{r}
+head(MXpair, 10) # Mexico
+```
+
+
+Pairwise for the South American population
+```{r}
+LOSANDESpair <- LOSANDES %>% clonecorrect(strata = ~Continent/Country) %>% pair.ia
+```
+```{r}
+head(LOSANDESpair, 10) # South America
+
+```
+We can see that most of the values from South America are indeed higher than in Mexico. Notice the value that says “NaN” in the South American data? That represents missing data. If you recall from the chapter on Locus Stats, the number of alleles at locus Pi33 for the South American population was 1. If you try to analyze the index of association on a locus with only one allele, you will get an undefined value. This is why the heatmap for the South American population has grey squares in it
+
+Plotting the output of pair.ia
+The output of pair.ia is a matrix that also has a class of “pairia”. It has a specific plot method that we can use to plot the output again and set a standard limit to the plot by specifying a range.
+```{r}
+plotrange <- range(c(MXpair, LOSANDESpair), na.rm = TRUE)
+plot(MXpair, limits = plotrange)
+```
+
+```{r}
+plot(LOSANDESpair, limits = plotrange)
+```
+

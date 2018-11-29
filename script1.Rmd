@@ -14,12 +14,6 @@ library("magrittr")
 ```
 
 ```{r}
-data(Pinf)
-allelic_diversity <- Pinf %>%
-  clonecorrect(strata= ~Continent/Country) %>% # clone censor by continent and country
-  seppop() %>%                                # Separate populations (by continent)
-  lapply(FUN = locus_table, info = FALSE)     # Apply the function locus_table to both populations
-allelic_diversity 
 ```
 
 ```{r}
@@ -28,10 +22,15 @@ browseVignettes(package = 'poppr')    # see vignettes from a specific package.
 vignette('poppr_manual')              #look at a specific vignette you can type
 ```
 #Importing data   
+##From microsatellites then  codominant
+
 ```{r}
+#Importing data   
+##From microsatellites then  codominant
 library("poppr")
 monpop <- read.genalex ("data/monpop.csv")
 monpop
+# It detects how many isolates, Loci and poblations are
 ```
 other formats that could be also read:
  FSTAT (file.dat)
@@ -39,9 +38,194 @@ GENETIX (file.gtx)
 GENEPOP (file.gen)
 STRUCTURE (file.str)
 #Splitting the data in levels as hierachielly
-
+#Population strata by space or time, pasting the columns by (“_” by default)
 ```{r}
+#Population strata by space or time, pasting the columns by (“_” by default)
 splitStrata(monpop) <- ~Tree/Year/Symptom
 monpop # After (Three distinct levels)
+# now it detects the 3 diffrenet strata within populations
+```
+
+
+#Good practices on poppr from <Phytophthora infestans> being microstallites being or triploid/tetraploid and sexual/clonal
+##The genotype accumulation curve
+##how much power you have to discriminate between unique individuals given a random sample of n loci. This analysis is particularly important for clonal organisms to confirm that a plateau has been reached in the number of loci necessary to discriminate individuals.
+```{r}
+library("poppr")
+data("Pinf") # Load the data
+Pinf         # We expect a maximum of 72 Multilocus Genotypes
+gac <- genotype_curve(Pinf, sample = 1000, quiet = TRUE)
+```
+#We specified sample = 1000 in our function call. <This means that for each boxplot, n  loci were randomly sampled 1000 times in order to create the distribution>. Since this data has been curated, we can see that we have reached the plateau with 11 loci, actually I think since 8 loci. Try seeing what happens when you use a data set of sexual populations such as microbov or nancycats. Also, what happens when you use dominant AFLP data such as Aeut?
+```{r}
+# Diploids and sexual, since loci = 3, the plataeu has being reached 
+ga<- genotype_curve(nancycats, sample = 1000, quiet = TRUE)
+```
+```{r}
+data(microbov)
+gn<- genotype_curve(microbov, sample = 1000, quiet = TRUE)
+```
+With just N= 2 loci the plateu is reach
+```{r}
+#Importing data   
+##From AFLP then dominant AFLP (diploid, clonal)
+##The alleles observed were treated as dominant markers with presence or absence
+#For agiven fungus  Aphanomyces, AFLP (diploid, clonal): Aeut , lets se ho it works 
+data(Aeut)
+gan<- genotype_curve(Aeut, sample = 1000, quiet = TRUE)
+```
+A lot of N loci are need to get the plateu, there is a big difference because different markers? dominant(binary) and codominant(many alleles) 
+
+#Allele frequencies, missing data, and ploidy, Allelic diversity
+```{r}
+(pinflt <- locus_table(Pinf))
+
+```
+Locus D13 the highest SImpson diversity(1-D)(0.884) and locus Pi04 has the most evenly distributed alleles(Eveness) (0.785). Maybe also D13 who most  Nei’s unbiased gene diversity (Nei, 1978)(Hexp) but is neecessary to check private alleles
+
+Plot of missing data per locus and per population
+```{r}
+info_table(Pinf, type = "missing", plot = TRUE)
+
+```
+If your data consists of polyploid SSR markers, you would code the unobserved alleles as ‘0’. The Pinf data set is a perfect example of this. It is a subset of a slightly larger tetraploid data set. In this example, each row represents an isolate and each column represents a locus:
+```{r}
+# converting  agenind object to dataframe
+tail(genind2df(Pinf, sep = "/"), n=10) # converting  agenind object to dataframe
+head(genind2df(Pinf, sep = "/"))
+#The genind2df() function transforms the data from genind object into a dataframe and adds ‘/’ as separators between alleles at each locus. Note how missing allelles are coded as ‘000
+```
+The genind2df() function transforms the data from genind object into a dataframe and adds ‘/’ as separators between alleles at each locus. Note how missing allelles are coded as ‘000
+
+To observe the different levels of ploidy in your data, use the function info_table with the argument type = "ploidy": Notice you can change the colors of the plot by setting a “low” color and a “high” color.
+```{r}
+Pinf.ploidy <- info_table(Pinf, type = "ploidy", plot = TRUE, low = "black", high = "orange")
+tail(Pinf.ploidy)
+```
+now able to assess the quality of your data and examine allelic diversity in your populations.
+#Calculating genotypic diversity#
+#Let us get a first impression of the diversity found in this data using the summary function, poppr:
+```{r}
+##Calculating genotypic diversity
+#Let us get a first impression of the diversity found in this data using the summary function, poppr:
+poppr(Pinf)
+
+
+  
+```
+where:
+<Pop>	Population name.
+N	Number of individuals observed.
+MLG	Number of multilocus genotypes (MLG) observed.
+eMLG	The number of expected MLG at the smallest sample size ≥ 10 based on rarefaction
+SE	Standard error based on eMLG.
+H	Shannon-Wiener Index of MLG diversity (Shannon, 2001).
+G	Stoddart and Taylor’s Index of MLG diversity (Stoddart & Taylor, 1988).
+lambda	Simpson’s Index (Simpson, 1949).
+E.5	Evenness, E5
+ (Pielou, 1975; Ludwig & Reynolds, 1988; Grünwald et al., 2003).
+Hexp	Nei’s unbiased gene diversity (Nei, 1978).
+Ia	The index of association, IA
+ (Brown, Feldman & Nevo, 1980; Smith et al., 1993).
+rbarD	The standardized index of association, r¯d
+ [@].
+ 
+ 
+ What does all this mean? Both populations have a similar number of individuals (N
+ = 38 and 48) sampled. However, one population has 29 and the other 43 MLG
+ while both populations together have combined 72 MLG. <Genotypic diversity> (either H  or G) is higher in population 2 than population 1, while evenness is similar 
+ 
+ let’s calculate MLG frequency  for each population, e.g. “South America” and “North America” populations:
+```{r}
+P.tab <- mlg.table(Pinf)
+```
+ Multilocus Genotype Table
+
+The figures provide histograms to see how <evenly MLGs>  are distributed within each population. Both populations have genotypes that occur a few times and only a few genotypes that occur more than 2 times (as expected from the high E5
+ discussed above). Try this analysis on other published data sets such as that of the root rot pathogen Aphanomyces euteiches, stored in poppr as Aeut. See if you can produce similar tables and graphs and compare it to the published paper (Grünwald & Hoheisel, 2006).
+ 
+```{r}
+#Importing data   
+##From AFLP then dominant AFLP (diploid, clonal)
+##The alleles observed were treated as dominant markers with presence or absence
+#For agiven fungus  Aphanomyces, AFLP (diploid, clonal): Aeut , lets se ho it works 
+data(Aeut)
+gan<- genotype_curve(Aeut, sample = 1000, quiet = TRUE)
+```
+ A lot of N loci are need to get the plateu, there is a big difference because different markers? dominant(binary) and codominant(many alleles) 
+```{r}
+(Aeutflt <- locus_table(Aeut))
+```
+ Locus D13 the highest SImpson diversity(1-D)(0.468) and locus L25 has the most evenly distributed alleles(Eveness) (0.994). In general,  Nei’s unbiased gene diversity (Nei, 1978)(Hexp) is low
+ 
+Plot of missing data per locus and per population
+```{r}
+info_table(Aeut, type = "missing", plot = TRUE)
+
+```
+
+
+```{r}
+tail(genind2df(Aeut, sep = "/"), n=10)
+head(genind2df(Aeut, sep = "/"), n=10)
+```
+If your data consists of polyploid SSR markers, you would code the unobserved alleles as ‘0’. The diplod data Aeut is a perfect example of this. In this example, each row represents an isolate and each column represents a locus:
+Not possible about ploidy
+```{r}
+Aeut.ploidy <- info_table(Aeut, type = "ploidy", plot = TRUE, low = "black", high = "orange")
+tail(Aeut.ploidy)
+```
+now able to assess the quality of your data and examine allelic diversity in your populations.
+#Calculating genotypic diversity#
+#Let us get a first impression of the diversity found in this data using the summary function, poppr:
+```{r}
+poppr(Aeut)
+```
+where:
+<Pop>	Population name.
+N	Number of individuals observed.
+MLG	Number of multilocus genotypes (MLG) observed.
+eMLG	The number of expected MLG at the smallest sample size ≥ 10 based on rarefaction
+SE	Standard error based on eMLG.
+H	Shannon-Wiener Index of MLG diversity (Shannon, 2001).
+G	Stoddart and Taylor’s Index of MLG diversity (Stoddart & Taylor, 1988).
+lambda	Simpson’s Index (Simpson, 1949).
+E.5	Evenness, E5
+ (Pielou, 1975; Ludwig & Reynolds, 1988; Grünwald et al., 2003).
+Hexp	Nei’s unbiased gene diversity (Nei, 1978).
+Ia	The index of association, IA
+ (Brown, Feldman & Nevo, 1980; Smith et al., 1993).
+rbarD	The standardized index of association, r¯d
+ [@].
+ 
+ 
+ What does all this mean? Both populations have a similar number of individuals (N
+ = 97 and 90) sampled. However, one population has 70 and the other 50 MLG
+ while both populations together have combined 119 MLG. <Genotypic diversity> (either H  or G) is higher in population Athena than Mt Vernon, while evenness is similar  and gene diversity(h)is very low
+ 
+ 
+  let’s calculate MLG frequency  for each population, e.g. “Athena” and “Mt. Vernon” populations:
+```{r}
+A.tab <- mlg.table(Aeut)
+```
+The figures provide histograms to see how <evenly MLGs>  are distributed within each population. Both populations have genotypes that occur a few times and only a few genotypes that occur more than 2 times (as expected from the high E5
+ discussed above)
+ 
+#Conclusions#
+Going through many of these steps will give you a valuable first look at your data. These analyses can give you insight into what methods you are able to use in your analysis. The genotype curve can tell you if you’ve sampled enough loci (or if you have over sampled) and info_table provides a nice visualization to aid assessing whether or not there are missing data in your sample. For clonal populations, the genotypic diversity table is valuable for informing you of how to clone-correct populations
+ 
+ 
+```{r}
+data(Pinf)
+allelic_diversity <- Pinf %>%
+  clonecorrect(strata= ~Continent/Country) %>% # clone censor by continent and country
+  seppop() %>%                                # Separate populations (by continent)
+  lapply(FUN = locus_table, info = FALSE)     # Apply the function locus_table to both populations
+allelic_diversity 
+
+```
+
+```{r}
+
 ```
 
