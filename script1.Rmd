@@ -54,14 +54,24 @@ monpop # After (Three distinct levels)
 library("poppr")
 data("Pinf") # Load the data
 Pinf         # We expect a maximum of 72 Multilocus Genotypes
+# Microsatellite (triploid, sexual/clonal): Pinf
+# This microsatellite data comes from a larger data set of populations of Phytophthora infestans (Goss et al., 2014). It contains 86 individuals representing 72 multilocus genotypes that have been genotyped over 11 loci. They are grouped by continent and country. This data set is used to demonstrate clone correction and linkage disequilibrium.
+
+
 gac <- genotype_curve(Pinf, sample = 1000, quiet = TRUE)
 ```
 #We specified sample = 1000 in our function call. <This means that for each boxplot, n  loci were randomly sampled 1000 times in order to create the distribution>. Since this data has been curated, we can see that we have reached the plateau with 11 loci, actually I think since 8 loci. Try seeing what happens when you use a data set of sexual populations such as microbov or nancycats. Also, what happens when you use dominant AFLP data such as Aeut?
 ```{r}
+#Microsatellite (diploid, sexual)
 # Diploids and sexual, since loci = 3, the plataeu has being reached 
+data("nancycats")
 ga<- genotype_curve(nancycats, sample = 1000, quiet = TRUE)
 ```
 ```{r}
+#Microsatellite (diploid, sexual): microbov
+# This data set contains 704 bovine samples over 30 microsatellite loci for 15 breeds, 2 species and 2 countries. From (Laloe et al., 2007).
+
+
 data(microbov)
 gn<- genotype_curve(microbov, sample = 1000, quiet = TRUE)
 ```
